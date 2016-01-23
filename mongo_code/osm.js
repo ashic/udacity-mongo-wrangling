@@ -35,6 +35,18 @@ db.raw1.find({'cuisine': {$exists:1}}).snapshot().forEach(function(el){
 });
 
 
+//Data cleansing 2 - postcodes.
+db.raw1.aggregate([{
+		$match: {
+		"address.postcode" : {
+			$regex:/(SE2|SE3|SE7|SE8|SE9|SE10|SE12|SE13|SE18|SE28|DA15|DA16|BR7)\s.*/ 
+			}
+		}
+	},
+	{$out:"greenwich"}
+]);
+
+
 var popular_cuisines = db.cuisines.aggregate([
 		{$match: {'cuisine': {$exists:1}}},					//only entries with cuisines
 		{$group: { _id: "$cuisine", 'count': {$sum:1} } },	//one for each array
