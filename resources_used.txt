@@ -1,1 +1,3 @@
 MongoDB documentation: https://docs.mongodb.org/manual/reference/ 
+Guidance on postcode regex: http://stackoverflow.com/questions/378157/python-regular-expression-postcode-search
+

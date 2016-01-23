@@ -93,6 +93,22 @@ problemchars = re.compile(r'[=\+/&<>;\'"\?%#$@\,\. \t\r\n]')
 CREATED = [ "version", "changeset", "timestamp", "user", "uid"]
 
 
+re_nospace = re.compile(r'(\b[A-Z]{1,2}[0-9][A-Z0-9][0-9]?[ABD-HJLNP-UW-Z]{2}\b)')
+re_space = re.compile(r'(\b[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][ABD-HJLNP-UW-Z]{2}\b)')
+
+def fix_postcode(postcode):
+    postcode = postcode.upper()
+
+    space_match = re_space.search(postcode)
+    if space_match:
+        return postcode
+    else:
+        nospace_match = re_nospace.search(postcode)
+        if nospace_match:
+            first_part = postcode[:-3]
+            last_3 = postcode[-3:]
+            return " ".join([first_part, last_3])
+
 def shape_element(element):
     node = {}
     # you should process only 2 types of top level tags: "node" and "way"
@@ -127,7 +143,8 @@ def shape_element(element):
                     if lower_colon.match(addr_key):
                         continue
                     else:
-                        node["address"][addr_key] = tag_val
+                    	if type(node["address"]) == dict:
+                        	node["address"][addr_key] = fix_postcode(tag_val) if addr_key == "postcode" else tag_val
                 elif lower_colon.match(tag_key):
                     node[tag_key] = tag_val
                 else:
@@ -142,7 +159,6 @@ def shape_element(element):
         return node
     else:
         return None
-
 
 def process_map(file_in, pretty = False):
     # You do not need to change this file
@@ -163,8 +179,8 @@ def test():
     # NOTE: if you are running this code on your computer, with a larger dataset, 
     # call the process_map procedure with pretty=False. The pretty=True option adds 
     # additional spaces to the output, making it significantly larger.
-    data = process_map('example.osm', True)
-    pprint.pprint(data)
+    data = process_map('greenwich.osm', False)
+    #pprint.pprint(data)
     
     correct_first_elem = {
         "id": "261114295", 
@@ -179,13 +195,18 @@ def test():
             "timestamp": "2012-03-28T18:31:23Z"
         }
     }
-    assert data[0] == correct_first_elem
-    assert data[-1]["address"] == {
-                                    "street": "West Lexington St.", 
-                                    "housenumber": "1412"
-                                      }
-    assert data[-1]["node_refs"] == [ "2199822281", "2199822390",  "2199822392", "2199822369", 
-                                    "2199822370", "2199822284", "2199822281"]
+
+
+    with open('greenwich.osm.json', 'w') as fp:
+        json.dump(data, fp)
+
+    # assert data[0] == correct_first_elem
+    # assert data[-1]["address"] == {
+    #                                 "street": "West Lexington St.", 
+    #                                 "housenumber": "1412"
+    #                                   }
+    # assert data[-1]["node_refs"] == [ "2199822281", "2199822390",  "2199822392", "2199822369", 
+    #                                 "2199822370", "2199822284", "2199822281"]
 
 if __name__ == "__main__":
     test()
